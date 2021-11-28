@@ -1,11 +1,13 @@
 package com.example.guessthephrase
 
+import android.content.DialogInterface
 import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -53,22 +55,7 @@ class MainActivity : AppCompatActivity() {
         submitButton = findViewById(R.id.btnSubmitButton)
         submitButton.setOnClickListener { newGuess() }
 
-        phrases = arrayListOf("My son lives in London",
-            "She plays basketball",
-            "He goes to football every day",
-            "He loves to play basketball",
-            "Does he go to school?",
-            "It usually rains every day here",
-            "It smells very delicious in the kitchen",
-            "George brushes her teeth twice a day",
-            "He gets up early every day",
-            "They speak English in USA")
-
-        // Expand the game to randomly select a phrase from a list
-        phrase = phrases[Random.nextInt(phrases.size)].toLowerCase()
-
-        convertToStar(phrase)
-        updateText()
+        playGame()
     }
 
     // Preserve the state to allow users to rotate the device
@@ -99,6 +86,36 @@ class MainActivity : AppCompatActivity() {
         //colors = savedInstanceState.getIntegerArrayList("myColors", [])
     }
 
+    fun playGame() {
+        myAnswer = ""
+        guessedLetters = ""
+        count = 0
+        guessPhrase = true
+
+        messages.clear()
+        colors.clear()
+        guessLetters.clear()
+
+        enableEntry()
+
+        phrases = arrayListOf("My son lives in London",
+            "She plays basketball",
+            "He goes to football every day",
+            "He loves to play basketball",
+            "Does he go to school?",
+            "It usually rains every day here",
+            "It smells very delicious in the kitchen",
+            "George brushes her teeth twice a day",
+            "He gets up early every day",
+            "They speak English in USA")
+
+        // Expand the game to randomly select a phrase from a list
+        phrase = phrases[Random.nextInt(phrases.size)].toLowerCase()
+
+        convertToStar(phrase)
+        updateText()
+    }
+
     private fun newGuess() {
         val userGuess = guessField.text.toString()
         guessField.text.clear()
@@ -112,6 +129,8 @@ class MainActivity : AppCompatActivity() {
                     messages.add("You got it!")
                     // Change the color of Text Views that display wrong phrases or letter guesses
                     colors.add(Color.GREEN)
+                    disableEntry()
+                    showAlert("You win!\n\nPlay again?")
                 }
                 else {
                     messages.add("Wrong guess: $userGuess")
@@ -187,8 +206,8 @@ class MainActivity : AppCompatActivity() {
         }
         for(i in myAnswerDictionary){myAnswer += myAnswerDictionary[i.key]}
         if(myAnswer==phrase){
-            //disableEntry()
-            //showAlertDialog("You win!\n\nPlay again?")
+            disableEntry()
+            showAlert("You win!\n\nPlay again?")
         }
         if(guessedLetters.isEmpty()){guessedLetters+=guessedLetter}else{guessedLetters+=", "+guessedLetter}
         if(found>0){
@@ -204,8 +223,48 @@ class MainActivity : AppCompatActivity() {
             messages.add("$guessesLeft guesses remaining")
             colors.add(Color.BLACK)
         }
+        else {
+            disableEntry()
+            showAlert("You loss!\n\nPlay again?")
+        }
         updateText()
         // Scroll the Recycler View to the bottom each time a new message is added
         myRV.scrollToPosition(messages.size - 1)
+    }
+
+    private fun enableEntry(){
+        submitButton.isEnabled = true
+        submitButton.isClickable = true
+        guessField.isEnabled = true
+        guessField.isClickable = true
+    }
+
+    private fun disableEntry(){
+        submitButton.isEnabled = false
+        submitButton.isClickable = false
+        guessField.isEnabled = false
+        guessField.isClickable = false
+    }
+
+    private fun showAlert(title: String){
+        // first we create a variable to hold an AlertDialog builder
+        val dialogBuilder = AlertDialog.Builder(this)
+
+        // here we set the message of our alert dialog
+        dialogBuilder.setMessage(title)
+            // positive button text and action
+            .setPositiveButton("Yes", DialogInterface.OnClickListener {
+                    dialog, id -> playGame()
+            })
+            // negative button text and action
+            .setNegativeButton("No", DialogInterface.OnClickListener {
+                    dialog, id -> dialog.cancel()
+            })
+        // create dialog box
+        val alert = dialogBuilder.create()
+        // set title for alert dialog box
+        alert.setTitle("Game over")
+        // show alert dialog
+        alert.show()
     }
 }
