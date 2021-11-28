@@ -1,9 +1,12 @@
 package com.example.guessthephrase
 
+import android.content.Context
 import android.content.DialogInterface
+import android.content.SharedPreferences
 import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -13,13 +16,17 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_main.*
+import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var sharedPreferences: SharedPreferences
+
     private lateinit var myLayout: ConstraintLayout
     private lateinit var myRV: RecyclerView
+    private lateinit var scoreText: TextView
     private lateinit var phraseText: TextView
     private lateinit var guessedLettersText: TextView
     private lateinit var guessField: EditText
@@ -48,12 +55,15 @@ class MainActivity : AppCompatActivity() {
         myRV.adapter = MessageAdaptor(messages, colors)
         myRV.layoutManager = LinearLayoutManager(this)
 
+        scoreText = findViewById(R.id.tvScore)
         phraseText = findViewById(R.id.tvPhrase)
         guessedLettersText = findViewById(R.id.tvGuessedLetters)
 
         guessField = findViewById(R.id.etGuessField)
         submitButton = findViewById(R.id.btnSubmitButton)
         submitButton.setOnClickListener { newGuess() }
+
+        tvScore.setText("Height Score: ${getHeightScore()}")
 
         playGame()
     }
@@ -110,7 +120,7 @@ class MainActivity : AppCompatActivity() {
             "They speak English in USA")
 
         // Expand the game to randomly select a phrase from a list
-        phrase = phrases[Random.nextInt(phrases.size)].toLowerCase()
+        phrase = phrases[Random.nextInt(phrases.size)].lowercase(Locale.getDefault())
 
         convertToStar(phrase)
         updateText()
@@ -125,11 +135,12 @@ class MainActivity : AppCompatActivity() {
             // phrase guess
             if (guessPhrase) {
                 guessPhrase = false // to switch between phrase and letter guess
-                if (userGuess.toUpperCase() == phrase.toUpperCase()) {
+                if (userGuess.uppercase(Locale.getDefault()) == phrase.uppercase(Locale.getDefault())) {
                     messages.add("You got it!")
                     // Change the color of Text Views that display wrong phrases or letter guesses
                     colors.add(Color.GREEN)
                     disableEntry()
+                    saveSharedPreferences(10-count)
                     showAlert("You win!\n\nPlay again?")
                 }
                 else {
@@ -166,7 +177,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateText() {
-        phraseText.text = "Phrase:  " + myAnswer.toUpperCase()
+        phraseText.text = "Phrase:  " + myAnswer.uppercase(Locale.getDefault())
         guessedLettersText.text = "Guessed Letters:  " + guessedLetters
         if (guessPhrase) {
             guessField.hint = "Guess the full phrase"
@@ -207,14 +218,15 @@ class MainActivity : AppCompatActivity() {
         for(i in myAnswerDictionary){myAnswer += myAnswerDictionary[i.key]}
         if(myAnswer==phrase){
             disableEntry()
+            saveSharedPreferences(10-count)
             showAlert("You win!\n\nPlay again?")
         }
         if(guessedLetters.isEmpty()){guessedLetters+=guessedLetter}else{guessedLetters+=", "+guessedLetter}
         if(found>0){
-            messages.add("Found $found ${guessedLetter.toUpperCase()}(s)")
+            messages.add("Found $found ${guessedLetter.uppercaseChar()}(s)")
             colors.add(Color.GREEN)
         }else{
-            messages.add("No ${guessedLetter.toUpperCase()}s found")
+            messages.add("No ${guessedLetter.uppercaseChar()}s found")
             colors.add(Color.RED)
         }
         count++
@@ -266,5 +278,25 @@ class MainActivity : AppCompatActivity() {
         alert.setTitle("Game over")
         // show alert dialog
         alert.show()
+    }
+
+    private fun getHeightScore() : Int {
+        sharedPreferences = this.getSharedPreferences(
+            getString(R.string.preference_file_key), Context.MODE_PRIVATE)
+        return sharedPreferences.getInt("heightScore", 0)  // --> retrieves data from Shared Preferences
+    }
+    private fun saveSharedPreferences(score: Int) {
+
+        var heightScore = getHeightScore()
+
+        if (heightScore < score) {
+            // save data with the following code
+            with(sharedPreferences.edit()) {
+                putInt("heightScore", score)
+                apply()
+            }
+            heightScore = score
+        }
+        tvScore.setText("Height Score: $heightScore")
     }
 }
