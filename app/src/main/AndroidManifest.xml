@@ -10,6 +10,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.GuessThePhrase">
         <activity
+            android:name=".AddPhraseActivity"
+            android:exported="true" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

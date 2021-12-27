@@ -2,11 +2,14 @@ package com.example.guessthephrase
 
 import android.content.Context
 import android.content.DialogInterface
+import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -21,6 +24,8 @@ import kotlin.collections.ArrayList
 import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
+
+    private val databaseHelper by lazy { DatabaseHelper(applicationContext) }
 
     private lateinit var sharedPreferences: SharedPreferences
 
@@ -81,6 +86,7 @@ class MainActivity : AppCompatActivity() {
         //outState.putCharArrayList("myGuessLetters", guessLetters)
         // myAnswerDictionary
     }
+
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
 
@@ -96,7 +102,7 @@ class MainActivity : AppCompatActivity() {
         //colors = savedInstanceState.getIntegerArrayList("myColors", [])
     }
 
-    fun playGame() {
+    private fun playGame() {
         myAnswer = ""
         guessedLetters = ""
         count = 0
@@ -108,16 +114,18 @@ class MainActivity : AppCompatActivity() {
 
         enableEntry()
 
-        phrases = arrayListOf("My son lives in London",
-            "She plays basketball",
-            "He goes to football every day",
-            "He loves to play basketball",
-            "Does he go to school?",
-            "It usually rains every day here",
-            "It smells very delicious in the kitchen",
-            "George brushes her teeth twice a day",
-            "He gets up early every day",
-            "They speak English in USA")
+        phrases = databaseHelper.readData()
+
+//        phrases = arrayListOf("My son lives in London",
+//            "She plays basketball",
+//            "He goes to football every day",
+//            "He loves to play basketball",
+//            "Does he go to school?",
+//            "It usually rains every day here",
+//            "It smells very delicious in the kitchen",
+//            "George brushes her teeth twice a day",
+//            "He gets up early every day",
+//            "They speak English in USA")
 
         // Expand the game to randomly select a phrase from a list
         phrase = phrases[Random.nextInt(phrases.size)].lowercase(Locale.getDefault())
@@ -285,6 +293,7 @@ class MainActivity : AppCompatActivity() {
             getString(R.string.preference_file_key), Context.MODE_PRIVATE)
         return sharedPreferences.getInt("heightScore", 0)  // --> retrieves data from Shared Preferences
     }
+
     private fun saveSharedPreferences(score: Int) {
 
         var heightScore = getHeightScore()
@@ -298,5 +307,19 @@ class MainActivity : AppCompatActivity() {
             heightScore = score
         }
         tvScore.setText("Height Score: $heightScore")
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when(item.itemId) {
+            R.id.addNewPhrase -> {
+                startActivity( Intent(this, AddPhraseActivity::class.java) )
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 }
